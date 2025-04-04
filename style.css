@@ -1,0 +1,357 @@
+:root {
+    --primary-color: #ffa64d;
+    --primary-dark: #ff9933;
+    --secondary-color: #ffb366;
+    --text-color: #333333;
+    --light-bg: #fcfcfc;
+    --border-color: #f0f0f0;
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    --success-color: #4caf50;
+    --code-bg: #282c34;
+    --note-bg: #fffcf5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--light-bg);
+    margin: 0;
+    padding: 0;
+}
+
+/* Layout */
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+    padding: 20px;
+    background-color: white;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+header h1 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+/* Navigation/ToC Styles */
+.sidebar {
+    background-color: white;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.toc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.toc-header h2 {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+}
+
+.toggle-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.toggle-button:hover {
+    background-color: var(--primary-dark);
+}
+
+.toc-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.toc-content.collapsed {
+    max-height: 0;
+}
+
+.toc-content ul {
+    list-style-type: none;
+}
+
+.toc-content ul ul {
+    margin-left: 20px;
+}
+
+.toc-content li {
+    margin-bottom: 8px;
+}
+
+.toc-content a {
+    color: var(--text-color);
+    text-decoration: none;
+    display: block;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.toc-content a:hover {
+    background-color: var(--light-bg);
+    color: var(--primary-color);
+}
+
+/* Main Content Styles */
+main {
+    margin-bottom: 40px;
+}
+
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+h2 {
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+h3 {
+    color: var(--primary-color);
+    margin: 25px 0 15px;
+}
+
+h4 {
+    margin: 20px 0 10px;
+}
+
+p, ul, ol {
+    margin-bottom: 15px;
+}
+
+/* Fix for list items with text bullets */
+.note ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.note ul li {
+    padding-left: 20px;
+    position: relative;
+}
+
+.note ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Code Blocks */
+.code-container {
+    position: relative;
+    margin: 15px 0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+pre {
+    background-color: var(--code-bg);
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0;
+    position: relative;
+}
+
+code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.copy-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.copy-button:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.copy-button.copied {
+    background-color: var(--success-color);
+    opacity: 1;
+}
+
+/* Notes and Highlights */
+.intro {
+    background-color: #fff5e6;
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.note {
+    background-color: var(--note-bg);
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+/* Table Styles */
+.table-container {
+    overflow-x: auto;
+    margin: 20px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+thead {
+    background-color: var(--primary-color);
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+th, td {
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+}
+
+tbody tr:nth-child(even) {
+    background-color: var(--light-bg);
+}
+
+tbody tr:hover {
+    background-color: #e6f7ff;
+}
+
+/* Footer Styles */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    color: var(--text-color);
+}
+
+footer p {
+    margin-bottom: 10px;
+}
+
+/* Responsive Styles */
+@media (min-width: 992px) {
+    .page-wrapper {
+        flex-direction: row;
+        min-height: calc(100vh - 130px);
+    }
+    
+    .sidebar {
+        width: 280px;
+        position: sticky;
+        top: 0;
+        height: calc(100vh - 130px);
+        overflow-y: auto;
+        border-right: 1px solid var(--border-color);
+    }
+    
+    .container {
+        flex: 1;
+        max-width: calc(100% - 280px);
+    }
+}
+
+@media (max-width: 991px) {
+    .page-wrapper {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        position: relative;
+    }
+    
+    .container {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .card {
+        padding: 15px;
+    }
+    
+    pre {
+        padding: 10px;
+    }
+    
+    th, td {
+        padding: 8px 10px;
+    }
+}

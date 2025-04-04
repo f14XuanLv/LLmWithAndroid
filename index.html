@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在安卓手机上运行LLM模型</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>在安卓手机上运行LLM模型</h1>
+        <p class="subtitle">以 gemma-3-1b-it-q4_k.gguf 为例</p>
+    </header>
+    
+    <div class="page-wrapper">
+        <nav id="toc" class="sidebar">
+            <div class="toc-header">
+                <h2>目录</h2>
+                <button id="toggleToc" class="toggle-button">收起</button>
+            </div>
+            <div class="toc-content">
+                <ul>
+                    <li><a href="#install-termux">安装 Termux</a></li>
+                    <li><a href="#clone-and-compile">克隆并编译 llama.cpp</a></li>
+                    <li><a href="#download-model">下载模型</a></li>
+                    <li><a href="#run-model">运行模型</a></li>
+                    <li><a href="#appendix">附录</a>
+                        <ul>
+                            <li><a href="#file-suffix">模型文件名相关后缀的说明</a></li>
+                            <li><a href="#params-table">模型参数调用表</a></li>
+                            <li><a href="#params-details">参数详细说明</a></li>
+                            <li><a href="#command-examples">命令示例</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        
+        <div class="container">
+            <main>
+            <section id="install-termux" class="card">
+                <h2>安装 Termux</h2>
+                <div class="intro">
+                    <p>Termux是一个Android终端模拟器和Linux环境应用程序，它允许用户在Android设备上运行Linux命令行工具和应用程序。
+                    Termux提供了一个强大的包管理器，可以安装各种软件包和工具。
+                    其次，Termux还支持SSH服务，可以让用户通过SSH远程访问和管理设备。</p>
+                </div>
+
+                <h3>1. 安装Termux</h3>
+                <p>先去 <a href="https://github.com/termux/termux-app/releases" target="_blank">https://github.com/termux/termux-app/releases</a> 下载最新的Termux安装包</p>
+                <p>安装完成后，打开Termux应用程序。</p>
+
+                <h3>2. 初始配置Termux</h3>
+                <div class="code-container">
+                    <pre><code class="bash"># 更新包管理器
+apt update && apt upgrade -y
+
+# 安装必要的工具
+apt install openssh git cmake python -y
+
+# 允许Termux访问手机存储
+termux-setup-storage</code></pre>
+                    <button class="copy-button" data-target="0">复制</button>
+                </div>
+
+                <h3>3. 设置SSH以便从电脑连接</h3>
+                <div class="code-container">
+                    <pre><code class="bash"># 设置密码（用于SSH登录）
+passwd
+
+# 启动SSH服务
+sshd
+
+# 查看手机IP地址
+ip addr show | grep inet
+
+# 查看用户名
+whoami</code></pre>
+                    <button class="copy-button" data-target="1">复制</button>
+                </div>
+
+                <div class="note">
+                    <p>要记录下来的信息：</p>
+                    <ul>
+                        <li>IP地址（通常是192.168.x.x或10.x.x.x格式）</li>
+                        <li>用户名（通常是"u0_a"开头的字符串）</li>
+                    </ul>
+                </div>
+
+                <h3>4. 从电脑连接到Termux</h3>
+                <p>使用远程工具（如MobaXterm或VSCode的SSH扩展）连接到Termux，使用用户名和密码登录。</p>
+                <div class="note">
+                    <p>手机上的Termux退出后，如果下次要再连接，需要重新启动SSH服务：</p>
+                    <div class="code-container">
+                        <pre><code class="bash">sshd</code></pre>
+                        <button class="copy-button" data-target="2">复制</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="clone-and-compile" class="card">
+                <h2>克隆并编译llama.cpp</h2>
+                
+                <h3>1. 克隆llama.cpp</h3>
+                <div class="code-container">
+                    <pre><code class="bash">git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp</code></pre>
+                    <button class="copy-button" data-target="3">复制</button>
+                </div>
+                <p>一般情况下如果要从Github上克隆代码，可能手机需要使用网络代理，也可以电脑上下载，然后通过ssh软件的文件传输功能，将项目传输到手机上。</p>
+
+                <h3>2. 编译llama.cpp</h3>
+                <div class="code-container">
+                    <pre><code class="bash">mkdir build
+cd build
+cmake ..
+make -j8 # 使用8个线程编译</code></pre>
+                    <button class="copy-button" data-target="4">复制</button>
+                </div>
+            </section>
+
+            <section id="download-model" class="card">
+                <h2>下载模型</h2>
+                <p>推荐直接去 <a href="https://huggingface.co/Mungert/gemma-3-1b-it-gguf/tree/main" target="_blank">https://huggingface.co/Mungert/gemma-3-1b-it-gguf/tree/main</a> 下载 google_gemma-3-1b-it-q4_k.gguf，然后通过ssh传输，将其放置在 llama.cpp/models/ 目录下</p>
+
+                <p>或者使用huggingface-cli下载模型：</p>
+                <div class="code-container">
+                    <pre><code class="bash">cd .. # 返回到 llama.cpp 目录下
+
+# 使用huggingface-cli下载模型，
+# 需要注册huggingface账号和安装huggingface-cli，并配置令牌
+huggingface-cli download Mungert/gemma-3-1b-it-gguf google_gemma-3-1b-it-q4_k.gguf --local-dir ./models</code></pre>
+                    <button class="copy-button" data-target="5">复制</button>
+                </div>
+                <p><a href="#file-suffix">模型文件名相关后缀的说明</a></p>
+            </section>
+
+            <section id="run-model" class="card">
+                <h2>运行模型</h2>
+                <div class="code-container">
+                    <pre><code class="bash">./build/bin/llama-cli -m ./models/google_gemma-3-1b-it-q4_k.gguf</code></pre>
+                    <button class="copy-button" data-target="6">复制</button>
+                </div>
+                <p>之后正常对话即可</p>
+                <p>相关链接：<a href="#params-table">模型参数调用表</a> | <a href="#params-details">参数详细说明</a> | <a href="#command-examples">命令示例</a></p>
+            </section>
+
+            <section id="appendix" class="card">
+                <h2>附录</h2>
+
+                <section id="file-suffix">
+                    <h3>模型文件名相关后缀的说明</h3>
+                    
+                    <h4>浮点精度</h4>
+                    <ul>
+                        <li><strong>fp16/f16</strong>：16位浮点精度，相比32位浮点精度(fp32)节省内存，同时在支持fp16加速的硬件上能获得更好的性能。适合GPU推理。</li>
+                        <li><strong>bf16</strong>：Brain浮点格式，是一种特殊的16位浮点格式。与fp16相比，它保留了与fp32相同的指数范围，但精度降低。适合支持bf16加速的现代GPU和TPU设备，能在降低内存使用的同时保持较高的性能和稳定性。</li>
+                    </ul>
+
+                    <h4>量化精度</h4>
+                    <ul>
+                        <li><strong>q8/Q8_0</strong>：将模型权重量化为8位整数，是量化模型中精度最高的常见选项，但也消耗更多内存。</li>
+                        <li><strong>q6_k/Q6_K</strong>：使用6位量化技术，k代表"k-quants"量化方法。在精度和内存占用之间提供平衡。</li>
+                        <li><strong>q4_k/Q4_K</strong>：4位量化，提供更小的模型体积，适合内存受限环境，但精度略低。</li>
+                        <li><strong>q3/Q3_K</strong>：3位量化，提供最小的模型体积，但精度相对较低。</li>
+                    </ul>
+
+                    <h4>大小和速度指标</h4>
+                    <ul>
+                        <li><strong>l/L</strong>：Large的缩写，通常指保留更多细节的量化模型，文件更大但精度更高。</li>
+                        <li><strong>m/M</strong>：Medium的缩写，指中等大小的量化模型，平衡了精度和大小。</li>
+                        <li><strong>s/S</strong>：Small的缩写，指更轻量级的量化模型，体积最小但可能在精度上有所牺牲。</li>
+                    </ul>
+                </section>
+
+                <section id="params-table">
+                    <h3>模型参数调用表</h3>
+                    <p>以下是AI自己生成的运行 Gemma 模型时可使用的主要参数，包括调用方法、意义及默认值，未必准确，供大家参考：</p>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>参数</th>
+                                    <th>命令行选项</th>
+                                    <th>意义</th>
+                                    <th>默认值</th>
+                                    <th>推荐值/范围</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>模型路径</td>
+                                    <td><code>-m, --model</code></td>
+                                    <td>指定模型文件路径</td>
+                                    <td>无</td>
+                                    <td>需指定具体路径</td>
+                                </tr>
+                                <tr>
+                                    <td>线程数</td>
+                                    <td><code>-t, --threads</code></td>
+                                    <td>指定使用的CPU线程数</td>
+                                    <td>系统最大线程数</td>
+                                    <td>4-8 (取决于CPU核心数)</td>
+                                </tr>
+                                <tr>
+                                    <td>上下文大小</td>
+                                    <td><code>--ctx-size</code></td>
+                                    <td>模型能处理的最大上下文长度</td>
+                                    <td>512</td>
+                                    <td>2048-32768</td>
+                                </tr>
+                                <tr>
+                                    <td>最大生成长度</td>
+                                    <td><code>-n, --n-predict</code></td>
+                                    <td>模型单次最多生成的token数</td>
+                                    <td>128</td>
+                                    <td>256-2048</td>
+                                </tr>
+                                <tr>
+                                    <td>温度</td>
+                                    <td><code>--temp</code></td>
+                                    <td>控制生成文本的随机性</td>
+                                    <td>0.8</td>
+                                    <td>0-2.0</td>
+                                </tr>
+                                <tr>
+                                    <td>Top-K</td>
+                                    <td><code>--top-k</code></td>
+                                    <td>每步考虑的最高概率token数</td>
+                                    <td>40</td>
+                                    <td>0-100</td>
+                                </tr>
+                                <tr>
+                                    <td>Top-P</td>
+                                    <td><code>--top-p</code></td>
+                                    <td>累积概率阈值筛选</td>
+                                    <td>0.9</td>
+                                    <td>0-1.0</td>
+                                </tr>
+                                <tr>
+                                    <td>批处理大小</td>
+                                    <td><code>--batch-size</code></td>
+                                    <td>并行处理的token数量</td>
+                                    <td>512</td>
+                                    <td>32-2048</td>
+                                </tr>
+                                <tr>
+                                    <td>重复惩罚</td>
+                                    <td><code>--repeat-penalty</code></td>
+                                    <td>控制文本重复的惩罚系数</td>
+                                    <td>1.1</td>
+                                    <td>1.0-2.0</td>
+                                </tr>
+                                <tr>
+                                    <td>频率惩罚</td>
+                                    <td><code>--freq-penalty</code></td>
+                                    <td>惩罚频繁出现的token</td>
+                                    <td>0.0</td>
+                                    <td>0-2.0</td>
+                                </tr>
+                                <tr>
+                                    <td>存在惩罚</td>
+                                    <td><code>--presence-penalty</code></td>
+                                    <td>惩罚已出现过的token</td>
+                                    <td>0.0</td>
+                                    <td>0-2.0</td>
+                                </tr>
+                                <tr>
+                                    <td>随机种子</td>
+                                    <td><code>--seed</code></td>
+                                    <td>控制随机生成的确定性</td>
+                                    <td>-1 (随机)</td>
+                                    <td>任意整数</td>
+                                </tr>
+                                <tr>
+                                    <td>提示词</td>
+                                    <td><code>--prompt</code></td>
+                                    <td>指定初始提示词</td>
+                                    <td>无</td>
+                                    <td>任意文本</td>
+                                </tr>
+                                <tr>
+                                    <td>交互模式</td>
+                                    <td><code>-i, --interactive</code></td>
+                                    <td>启用交互式聊天模式</td>
+                                    <td>启用</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>多行输入</td>
+                                    <td><code>--multiline-input</code></td>
+                                    <td>允许在交互模式下输入多行</td>
+                                    <td>未启用</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>记录提示词</td>
+                                    <td><code>--prompt-cache</code></td>
+                                    <td>缓存提示词的文件路径</td>
+                                    <td>未启用</td>
+                                    <td>文件路径</td>
+                                </tr>
+                                <tr>
+                                    <td>记录输出</td>
+                                    <td><code>--log-file</code></td>
+                                    <td>记录输出内容的文件路径</td>
+                                    <td>未启用</td>
+                                    <td>文件路径</td>
+                                </tr>
+                                <tr>
+                                    <td>Mirostat采样</td>
+                                    <td><code>--mirostat</code></td>
+                                    <td>启用Mirostat采样算法</td>
+                                    <td>0 (关闭)</td>
+                                    <td>0-2</td>
+                                </tr>
+                                <tr>
+                                    <td>KV缓存</td>
+                                    <td><code>--no-kv-cache</code></td>
+                                    <td>禁用KV缓存加速生成</td>
+                                    <td>启用</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>内存映射</td>
+                                    <td><code>--mmap</code></td>
+                                    <td>使用内存映射加载模型</td>
+                                    <td>启用</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>模型加载模式</td>
+                                    <td><code>--lora</code></td>
+                                    <td>加载LoRA适配器</td>
+                                    <td>未启用</td>
+                                    <td>文件路径</td>
+                                </tr>
+                                <tr>
+                                    <td>语言</td>
+                                    <td><code>--language</code></td>
+                                    <td>指定响应语言</td>
+                                    <td>自动</td>
+                                    <td>"zh"(中文),"en"(英文)等</td>
+                                </tr>
+                                <tr>
+                                    <td>系统提示词</td>
+                                    <td><code>--system-prompt</code></td>
+                                    <td>设置系统提示词</td>
+                                    <td>无</td>
+                                    <td>任意文本</td>
+                                </tr>
+                                <tr>
+                                    <td>GPU层数</td>
+                                    <td><code>-ngl, --n-gpu-layers</code></td>
+                                    <td>在GPU上运行的层数</td>
+                                    <td>0</td>
+                                    <td>0-全部层数</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="params-details">
+                    <h3>参数详细说明</h3>
+
+                    <h4>基本参数</h4>
+                    <ul>
+                        <li><strong>模型路径</strong>：必须参数，指定模型文件位置</li>
+                        <li><strong>线程数</strong>：影响推理速度，建议设置为实际CPU核心数或稍低</li>
+                        <li><strong>上下文大小</strong>：影响模型能"记住"的内容长度，更大的值需要更多内存</li>
+                    </ul>
+
+                    <h4>生成控制参数</h4>
+                    <ul>
+                        <li><strong>温度</strong>：
+                            <ul>
+                                <li>0：完全确定性输出，总是选择最可能的token</li>
+                                <li>0.7：平衡创造性与一致性</li>
+                                <li>1.0+：更加随机和创造性的输出</li>
+                            </ul>
+                        </li>
+                        <li><strong>Top-K</strong>：每步考虑概率最高的K个token
+                            <ul>
+                                <li>较小值(10)：更保守的输出</li>
+                                <li>较大值(100)：更多样化的输出</li>
+                                <li>0：禁用Top-K筛选</li>
+                            </ul>
+                        </li>
+                        <li><strong>Top-P</strong>：累积概率达到P时截止考虑候选token
+                            <ul>
+                                <li>较小值(0.5)：更保守、可预测的输出</li>
+                                <li>较大值(0.95)：更多样化的输出</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>性能参数</h4>
+                    <ul>
+                        <li><strong>批处理大小</strong>：并行处理token数量，更大值提高吞吐量但增加内存占用</li>
+                        <li><strong>内存映射</strong>：通过映射文件而非加载整个模型到内存来减少RAM使用</li>
+                        <li><strong>GPU层数</strong>：指定多少层在GPU上运行，0表示完全使用CPU</li>
+                    </ul>
+
+                    <h4>特殊应用场景的参数设置</h4>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>场景</th>
+                                    <th>温度</th>
+                                    <th>Top-P</th>
+                                    <th>Top-K</th>
+                                    <th>重复惩罚</th>
+                                    <th>其他参数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>创意写作</td>
+                                    <td>0.8-1.0</td>
+                                    <td>0.95</td>
+                                    <td>60</td>
+                                    <td>1.1</td>
+                                    <td>较大生成长度</td>
+                                </tr>
+                                <tr>
+                                    <td>严谨问答</td>
+                                    <td>0.3-0.5</td>
+                                    <td>0.8</td>
+                                    <td>30</td>
+                                    <td>1.2</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>代码生成</td>
+                                    <td>0.2-0.4</td>
+                                    <td>0.9</td>
+                                    <td>20</td>
+                                    <td>1.3-1.5</td>
+                                    <td>频率惩罚=0.1</td>
+                                </tr>
+                                <tr>
+                                    <td>故事续写</td>
+                                    <td>0.7-0.9</td>
+                                    <td>0.92</td>
+                                    <td>50</td>
+                                    <td>1.05</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>摘要生成</td>
+                                    <td>0.4-0.6</td>
+                                    <td>0.85</td>
+                                    <td>40</td>
+                                    <td>1.2</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="command-examples">
+                    <h3>命令示例</h3>
+                    <div class="code-container">
+                        <pre><code class="bash">./build/bin/llama-cli -m ./models/google_gemma-3-1b-it-q4_k.gguf \
+  --threads 4 \
+  --ctx-size 8192 \
+  --n-predict 1024 \
+  --temp 0.7 \
+  --top-k 40 \
+  --top-p 0.9 \
+  --batch-size 512 \
+  --repeat-penalty 1.1 \
+  --system-prompt "你是一个智能助手，能够提供准确、有用的信息" \
+  --interactive</code></pre>
+                        <button class="copy-button" data-target="7">复制</button>
+                    </div>
+                </section>
+            </section>
+        </main>
+        </div>
+    </div>
+
+    <footer>
+        <p>基于 <a href="https://github.com/ggml-org/llama.cpp" target="_blank">llama.cpp</a> 的安卓手机LLM部署指南</p>
+        <p>文档最后更新时间: <span id="lastUpdated"></span></p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
